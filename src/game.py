@@ -11,9 +11,26 @@ class Game:
         self.gamer = Gamer()
         self.opponent = Opponent()
 
+    def __getitem__(self, x, y=None):
+        if y is None:
+            items = []
+            for _x, _y in x:
+                for tile in self.tiles:
+                    if (tile.x, tile.y) == (_x, _y):
+                        items.append(tile)
+            return items
+        for tile in self.tiles:
+            if (tile.x, tile.y) == (x, y):
+                return tile
+        return None
+
     @property
     def players(self):
         return [self.gamer, self.opponent]
+
+    @property
+    def tiles(self):
+        return self.neutral_tiles + self.gamer.tiles + self.opponent.tiles
 
     def update(self):
         for y in range(self.height):
