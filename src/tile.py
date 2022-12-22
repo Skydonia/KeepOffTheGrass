@@ -14,6 +14,9 @@ class Tile:
         self.can_spawn = can_spawn
         self.in_range_of_recycler = in_range_of_recycler
 
+    def __repr__(self):
+        return f"x={self.x}, y={self.y}, owner={self.owner}, unit={self.units}, scrap={self.scrap_amount}"
+
     @property
     def spawn_number(self):
         return 0

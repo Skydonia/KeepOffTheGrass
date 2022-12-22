@@ -4,23 +4,22 @@ from .const import ME, OPP
 
 
 class Game:
-    def __init__(self, width: int, height: int):
-        self.width = width
-        self.height = height
+    def __init__(self):
+        self.width, self.height = self.get_size()
         self.neutral_tiles = []
         self.gamer = Gamer()
         self.opponent = Opponent()
 
-    def __getitem__(self, x, y=None):
-        if y is None:
+    def __getitem__(self, x):
+        if type(x) == list:
             items = []
-            for _x, _y in x:
+            for ref in x:
                 for tile in self.tiles:
-                    if (tile.x, tile.y) == (_x, _y):
+                    if (tile.x, tile.y) == (ref[0], ref[-1]):
                         items.append(tile)
             return items
         for tile in self.tiles:
-            if (tile.x, tile.y) == (x, y):
+            if (tile.x, tile.y) == (x[0], x[-1]):
                 return tile
         return None
 
@@ -32,11 +31,18 @@ class Game:
     def tiles(self):
         return self.neutral_tiles + self.gamer.tiles + self.opponent.tiles
 
+    @staticmethod
+    def get_size():
+        return [int(i) for i in input().split()]
+
+    @staticmethod
+    def get_state():
+        return [int(k) for k in input().split()]
+
     def update(self):
         for y in range(self.height):
             for x in range(self.width):
-                scrap_amount, owner, units, recycler, can_build, can_spawn, in_range_of_recycler = [int(k) for k in
-                                                                                                    input().split()]
+                scrap_amount, owner, units, recycler, can_build, can_spawn, in_range_of_recycler = self.get_state()
                 tile = Tile(x, y, scrap_amount, owner, units, recycler == 1, can_build == 1, can_spawn == 1,
                             in_range_of_recycler == 1)
                 self.dispatch_tile(tile)

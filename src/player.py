@@ -6,6 +6,9 @@ class Player:
         self.name = name
         self.tiles = []
 
+    def __repr__(self):
+        return f"{self.name}: {len(self.tiles)}"
+
     @property
     def units(self):
         return [tile for tile in self.tiles if tile.units > 0]
@@ -57,4 +60,6 @@ class Gamer(Player):
         self.build_function()
         self.spawn_function()
         self.move_function()
-        print(';'.join(self.str_actions) if len(self.actions) > 0 else 'WAIT')
+        sequence = ';'.join(self.str_actions) if len(self.actions) > 0 else 'WAIT'
+        print(sequence)
+        return sequence
