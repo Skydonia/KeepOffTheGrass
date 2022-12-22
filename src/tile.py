@@ -28,7 +28,7 @@ class Tile:
     def get_distance(self, other):
         return (other.x - self.x) ** 2 + (other.y - self.y) ** 2
 
-    def get_nearest_opponent(self, tiles: list):
+    def get_nearest_opponent_unit(self, tiles: list):
         units_tiles = [self.get_distance(tile) for tile in tiles if tile.units > 0]
         if len(units_tiles) == 0:
             return None

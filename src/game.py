@@ -40,6 +40,7 @@ class Game:
         return [int(k) for k in input().split()]
 
     def update(self):
+        self.get_state()
         for y in range(self.height):
             for x in range(self.width):
                 scrap_amount, owner, units, recycler, can_build, can_spawn, in_range_of_recycler = self.get_state()
