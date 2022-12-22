@@ -33,4 +33,4 @@ class Move(Action):
         self.target_tile = target_tile
 
     def __str__(self):
-        return f'{self.name} {self.from_tile.x} {self.from_tile.y} {self.target_tile.x} {self.target_tile.y}'
+        return f'{self.name} {self.amount} {self.from_tile.x} {self.from_tile.y} {self.target_tile.x} {self.target_tile.y}'

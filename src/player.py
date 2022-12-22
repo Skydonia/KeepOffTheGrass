@@ -53,13 +53,15 @@ class Gamer(Player):
                 self.actions.append(Build(tile))
         return
 
-    def move_function(self):
+    def move_function(self, game):
+        for tile in self.units:
+            self.actions.append(Move(tile.units, tile, game[5, 5]))
         return
 
-    def play(self):
+    def play(self, game):
         self.build_function()
         self.spawn_function()
-        self.move_function()
+        self.move_function(game)
         sequence = ';'.join(self.str_actions) if len(self.actions) > 0 else 'WAIT'
         print(sequence)
         return sequence
