@@ -42,6 +42,16 @@ class Tile:
         nearest_index = np.argmin(distances_tiles)
         return tiles[nearest_index]
 
+    def chose_random_near_tile(self, game):
+        possible_tiles = []
+        for x in [self.x, self.x+1]:
+            for y in [self.y, self.y + 1]:
+                if x < game.width and y < game.height:
+                    possible_tiles.append(game[x, y])
+        index = np.random.randint(len(possible_tiles))
+        return possible_tiles[index]
+
+
     @property
     def spawn_number(self):
         if self.can_spawn:
