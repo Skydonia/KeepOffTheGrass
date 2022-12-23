@@ -63,6 +63,7 @@ class Gamer(Player):
         return
 
     def play(self, game):
+        self.actions = []
         self.build_function()
         self.spawn_function()
         self.move_function(game)

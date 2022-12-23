@@ -40,7 +40,6 @@ class Tile:
             return None
         distances_tiles = self.get_distances(tiles)
         nearest_index = np.argmin(distances_tiles)
-        LOGGER.append(f'MESSAGE {self} nearest empty is {tiles[nearest_index]}')
         return tiles[nearest_index]
 
     @property
