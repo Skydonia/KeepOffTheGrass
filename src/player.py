@@ -55,7 +55,8 @@ class Gamer(Player):
 
     def move_function(self, game):
         for tile in self.units:
-            self.actions.append(Move(tile.units, tile, game[5, 5]))
+            # self.actions.append(Move(tile.units, tile, tile.get_nearest_opponent_unit(game.opponent.units)))
+            self.actions.append(Move(tile.units, tile, tile.get_nearest_empty(game.neutral_tiles + game.opponent.tiles)))
         return
 
     def play(self, game):

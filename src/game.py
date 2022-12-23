@@ -41,6 +41,9 @@ class Game:
 
     def update(self):
         self.get_state()
+        self.gamer.tiles = []
+        self.opponent.tiles = []
+        self.neutral_tiles = []
         for y in range(self.height):
             for x in range(self.width):
                 scrap_amount, owner, units, recycler, can_build, can_spawn, in_range_of_recycler = self.get_state()

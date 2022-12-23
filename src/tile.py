@@ -1,4 +1,5 @@
 import numpy as np
+from .const import NONE
 
 
 class Tile:
@@ -18,15 +19,11 @@ class Tile:
         return f"x={self.x}, y={self.y}, owner={self.owner}, unit={self.units}, scrap={self.scrap_amount}"
 
     @property
-    def spawn_number(self):
-        return 0
-
-    @property
     def should_build(self):
         return False
 
     def get_distance(self, other):
-        return (other.x - self.x) ** 2 + (other.y - self.y) ** 2
+        return abs(other.x - self.x) + abs(other.y - self.y)
 
     def get_nearest_opponent_unit(self, tiles: list):
         units_tiles = [self.get_distance(tile) for tile in tiles if tile.units > 0]
@@ -34,3 +31,20 @@ class Tile:
             return None
         nearest_index = np.argmax(units_tiles)
         return tiles[nearest_index]
+
+    def get_distances(self, tiles):
+        return [self.get_distance(tile) for tile in tiles]
+
+    def get_nearest_empty_tile(self, tiles: list):
+        _tiles = [tile for tile in tiles if (tile.owner == NONE) and (tile.scrap_amount >= 0)]
+        distances_tiles = self.get_distances(_tiles)
+        if len(distances_tiles) == 0:
+            return None
+        nearest_index = np.argmin(distances_tiles)
+        return _tiles[nearest_index]
+
+    @property
+    def spawn_number(self):
+        if self.can_spawn:
+            return 1
+        return 0

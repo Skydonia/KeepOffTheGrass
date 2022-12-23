@@ -7,7 +7,7 @@ class Action:
 
 
 class Spawn(Action):
-    def __init__(self, tile, amount: int):
+    def __init__(self, amount: int, tile):
         super().__init__()
         self.tile = tile
         self.amount = amount
