@@ -9,6 +9,8 @@ class Game:
         self.neutral_tiles = []
         self.gamer = Gamer()
         self.opponent = Opponent()
+        self.logger = []
+        self.step = 0
 
     def __getitem__(self, x):
         if type(x) == list:
@@ -31,6 +33,14 @@ class Game:
     def tiles(self):
         return self.neutral_tiles + self.gamer.tiles + self.opponent.tiles
 
+    @property
+    def neutral_scrap_tiles(self):
+        return [tile for tile in self.neutral_tiles if tile.scrap_amount > 0]
+
+    @property
+    def neutral_grass_tiles(self):
+        return [tile for tile in self.neutral_tiles if tile.scrap_amount == 0]
+
     @staticmethod
     def get_size():
         return [int(i) for i in input().split()]
@@ -40,7 +50,8 @@ class Game:
         return [int(k) for k in input().split()]
 
     def update(self):
-        self.get_state()
+        self.step += 1
+        self.gamer.matter, self.opponent.matter = self.get_state()
         self.gamer.tiles = []
         self.opponent.tiles = []
         self.neutral_tiles = []

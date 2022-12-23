@@ -1,5 +1,5 @@
 import numpy as np
-from .const import NONE
+from .logger import LOGGER
 
 
 class Tile:
@@ -35,13 +35,13 @@ class Tile:
     def get_distances(self, tiles):
         return [self.get_distance(tile) for tile in tiles]
 
-    def get_nearest_empty_tile(self, tiles: list):
-        _tiles = [tile for tile in tiles if (tile.owner == NONE) and (tile.scrap_amount >= 0)]
-        distances_tiles = self.get_distances(_tiles)
-        if len(distances_tiles) == 0:
+    def get_nearest_tile(self, tiles: list):
+        if len(tiles) == 0:
             return None
+        distances_tiles = self.get_distances(tiles)
         nearest_index = np.argmin(distances_tiles)
-        return _tiles[nearest_index]
+        LOGGER.append(f'MESSAGE {self} nearest empty is {tiles[nearest_index]}')
+        return tiles[nearest_index]
 
     @property
     def spawn_number(self):

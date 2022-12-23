@@ -1,16 +1,18 @@
 from .actions import Move, Spawn, Build
+from .logger import LOGGER
 
 
 class Player:
     def __init__(self, name: str):
         self.name = name
         self.tiles = []
+        self.matter = 0
 
     def __repr__(self):
         return f"{self.name}: {len(self.tiles)}"
 
     @property
-    def units(self):
+    def bots(self):
         return [tile for tile in self.tiles if tile.units > 0]
 
     @property
@@ -54,15 +56,16 @@ class Gamer(Player):
         return
 
     def move_function(self, game):
-        for tile in self.units:
+        for bot in self.bots:
             # self.actions.append(Move(tile.units, tile, tile.get_nearest_opponent_unit(game.opponent.units)))
-            self.actions.append(Move(tile.units, tile, tile.get_nearest_empty(game.neutral_tiles + game.opponent.tiles)))
+            self.actions.append(
+                Move(bot.units, bot, bot.get_nearest_tile(game.neutral_scrap_tiles + game.opponent.bots)))
         return
 
     def play(self, game):
         self.build_function()
         self.spawn_function()
         self.move_function(game)
-        sequence = ';'.join(self.str_actions) if len(self.actions) > 0 else 'WAIT'
+        sequence = ';'.join(LOGGER + self.str_actions) if len(self.actions) > 0 else 'WAIT'
         print(sequence)
         return sequence
