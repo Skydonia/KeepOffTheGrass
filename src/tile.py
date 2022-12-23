@@ -1,5 +1,6 @@
 import numpy as np
 from .logger import LOGGER
+from .utils import get_tile_from_list
 
 
 class Tile:
@@ -14,6 +15,7 @@ class Tile:
         self.can_build = can_build
         self.can_spawn = can_spawn
         self.in_range_of_recycler = in_range_of_recycler
+        self.isle_id = None
 
     def __repr__(self):
         return f"x={self.x}, y={self.y}, owner={self.owner}, unit={self.units}, scrap={self.scrap_amount}"
@@ -43,17 +45,53 @@ class Tile:
         return tiles[nearest_index]
 
     def chose_random_near_tile(self, game):
-        possible_tiles = []
-        for x in [self.x, self.x+1]:
-            for y in [self.y, self.y + 1]:
-                if x < game.width and y < game.height:
-                    possible_tiles.append(game[x, y])
+        possible_tiles = self.get_around_tiles(game)
         index = np.random.randint(len(possible_tiles))
         return possible_tiles[index]
 
+    def scrap_around(self, game):
+        possible_tiles = self.get_around_tiles(game)
+        return sum([tile.scrap_amount for tile in possible_tiles])
+
+    def in_recyclers_line_columns(self, recyclers, only=None):
+        if only is None:
+            only = ['x', 'y']
+        for recycler in recyclers:
+            a = 0
+            for attrib in only:
+                if getattr(recycler, attrib) == getattr(self, attrib):
+                    a += 1
+            return a > 0
+        return False
 
     @property
     def spawn_number(self):
         if self.can_spawn:
             return 1
         return 0
+
+    def get_around_tiles(self, game, tiles=None):
+        if tiles is None:
+            tiles = game.tiles
+        possible_tiles = []
+        for x in [self.x - 1, self.x + 1]:
+            if 0 <= x < game.width:
+                new_tile = get_tile_from_list(x, self.y, tiles)
+                if new_tile is not None:
+                    possible_tiles.append(new_tile)
+        for y in [self.y - 1, self.y + 1]:
+            if 0 <= y < game.height:
+                new_tile = get_tile_from_list(self.x, y, tiles)
+                if new_tile is not None:
+                    possible_tiles.append(new_tile)
+        return possible_tiles
+
+    def neighborhood(self, game, unaffected_tiles, isle_id=0):
+        children = [self]
+        unaffected_tiles.remove(self)
+        around_tiles = self.get_around_tiles(game, tiles=unaffected_tiles)
+        for tile in around_tiles:
+            tile.isle_id = isle_id
+            if tile not in children:
+                children += tile.neighborhood(game, unaffected_tiles, isle_id=isle_id)
+        return children

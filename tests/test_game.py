@@ -8,7 +8,7 @@ def get_size_mock(game):
 
 
 def get_state_mock(game):
-    scrap_amount = np.random.randint(50)
+    scrap_amount = np.random.randint(1, 4)
     owner = np.random.randint(-1, 2)
     units = (0, np.random.randint(4))[np.random.rand() > 0.9]
     recycler = np.random.randint(3)
@@ -51,3 +51,12 @@ def test_play():
     test_game = Game()
     test_game.update()
     assert test_game.gamer.play() == "WAIT"
+
+
+@mock.patch.object(Game, 'get_size', get_size_mock)
+@mock.patch.object(Game, 'get_state', get_state_mock)
+def test_recursivesq():
+    test_game = Game()
+    test_game.update()
+    # isle_size = len(test_game[5, 5].neighborhood(test_game, test_game.tiles, isle_id='test'))
+    assert True

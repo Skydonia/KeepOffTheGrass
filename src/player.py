@@ -1,7 +1,9 @@
 import pandas as pd
+import numpy as np
 
 from .actions import Move, Spawn, Build
 from .logger import LOGGER
+from .const import RECYCLER_COST, BOT_COST
 
 
 class Player:
@@ -9,6 +11,7 @@ class Player:
         self.name = name
         self.tiles = []
         self.matter = 0
+        self.spawned_recyclers = 0
 
     def __repr__(self):
         return f"{self.name}: {len(self.tiles)}"
@@ -28,6 +31,14 @@ class Player:
     @property
     def build_able_tiles(self):
         return [tile for tile in self.tiles if tile.can_build]
+
+    @property
+    def buildable_bots(self):
+        return self.matter // BOT_COST
+
+    @property
+    def buildable_recyclers(self):
+        return self.matter // RECYCLER_COST
 
     def get_enemy_distances(self, enemy):
         distances = []
@@ -58,6 +69,14 @@ class Player:
         if len(distances) == 0:
             return None
         return distances.iloc[0]['tile']
+
+    def get_recycling_scrap_infos(self, game):
+        scraps = []
+        for tile in self.build_able_tiles:
+            scrap = tile.scrap_around(game)
+            scraps.append({'tile': tile, 'scrap': scrap})
+        distances = pd.DataFrame(scraps).sort_values('scrap', ascending=False)
+        return distances
 
 
 class Opponent(Player):
@@ -96,26 +115,48 @@ class Gamer(Player):
                     tiles.append(tile)
         return tiles
 
-    def spawn_function(self, enemy):
-        self.spawn_defenders(enemy)
-        closest_tile = self.get_closest_tile_to_enemy(enemy)
-        if closest_tile is not None:
-            amount = closest_tile.spawn_number
-            if amount > 0:
-                self.actions.append(Spawn(amount, closest_tile))
+    def spread_bot(self, enemy):
+        distances = self.get_tile_distances(enemy)
+        for b in range(self.buildable_bots):
+            self.actions.append(Spawn(1, distances.iloc[b]['tile']))
         return
 
-    def build_function(self):
-        for tile in self.build_able_tiles:
-            if tile.should_build:
-                self.actions.append(Build(tile))
+    def check_bots_recyclers_ratio(self, n):
+        nb_recyclers = len(self.recyclers)
+        if nb_recyclers == 0:
+            return True
+        return (len(self.bots) / nb_recyclers) >= n
+
+    def spawn_function(self, enemy):
+        self.spawn_defenders(enemy)
+        # closest_tile = self.get_closest_tile_to_enemy(enemy)
+        # if closest_tile is not None:
+        #     amount = closest_tile.spawn_number
+        #     if amount > 0:
+        #         self.actions.append(Spawn(amount, closest_tile))
+        self.spread_bot(enemy)
+        return
+
+    def build_function(self, game):
+        max_recyclers = game.width
+        max_recycler_per_step = 1
+        if self.spawned_recyclers < max_recyclers and game.step > 1 and self.check_bots_recyclers_ratio(4):
+            self.spawned_recyclers += 1
+            scraps = self.get_recycling_scrap_infos(game)
+            scraps['right'] = scraps['tile'].apply(lambda x: game.frontier - x.x)
+            scraps['left'] = scraps['tile'].apply(lambda x: x.x - game.frontier)
+            scraps = scraps.sort_values(game.side, ascending=False)
+            for i in range(min(self.buildable_recyclers, max_recycler_per_step)):
+                tile = scraps.iloc[i]['tile']
+                if not tile.in_recyclers_line_columns(self.recyclers, only=['y']):
+                    self.actions.append(Build(tile))
         return
 
     def move_function(self, game):
-        max_stacked = 2
+        max_stacked = 1
         for bot in self.bots:
             if bot.units > max_stacked:
-                for _ in range(max_stacked+1, bot.units):
+                for _ in range(max_stacked + 1, bot.units):
                     random_tile = bot.chose_random_near_tile(game)
                     self.actions.append(Move(1, bot, random_tile))
             target_tile = bot.get_nearest_tile(self.get_possible_move_tiles(game))
@@ -124,7 +165,7 @@ class Gamer(Player):
 
     def play(self, game):
         self.actions = []
-        self.build_function()
+        self.build_function(game)
         self.spawn_function(game.opponent)
         self.move_function(game)
         sequence = ';'.join(LOGGER + self.str_actions) if len(self.actions) > 0 else 'WAIT'

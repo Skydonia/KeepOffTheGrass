@@ -1,3 +1,5 @@
 ME = 1
 OPP = 0
 NONE = -1
+RECYCLER_COST = 10
+BOT_COST = 10

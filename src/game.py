@@ -1,6 +1,9 @@
 from .player import Gamer, Opponent
 from .tile import Tile
 from .const import ME, OPP
+from .utils import get_tile_from_list
+from .logger import LOGGER
+import numpy as np
 
 
 class Game:
@@ -11,19 +14,15 @@ class Game:
         self.opponent = Opponent()
         self.logger = []
         self.step = 0
+        self.side = None
+        self.isles = 1
 
     def __getitem__(self, x):
-        if type(x) == list:
-            items = []
-            for ref in x:
-                for tile in self.tiles:
-                    if (tile.x, tile.y) == (ref[0], ref[-1]):
-                        items.append(tile)
-            return items
-        for tile in self.tiles:
-            if (tile.x, tile.y) == (x[0], x[-1]):
-                return tile
-        return None
+        return get_tile_from_list(x[0], x[-1], self.tiles)
+
+    @property
+    def size(self):
+        return self.width * self.height
 
     @property
     def players(self):
@@ -41,6 +40,10 @@ class Game:
     def neutral_grass_tiles(self):
         return [tile for tile in self.neutral_tiles if tile.scrap_amount == 0]
 
+    @property
+    def frontier(self):
+        return (self.width // 2 + 1, self.width // 2 + 1)[self.width % 2 == 0]
+
     @staticmethod
     def get_size():
         return [int(i) for i in input().split()]
@@ -51,7 +54,7 @@ class Game:
 
     def update(self):
         self.step += 1
-        self.gamer.matter, self.opponent.matter = self.get_state()
+        self.gamer.matter, self.opponent.matter = self.get_size()
         self.gamer.tiles = []
         self.opponent.tiles = []
         self.neutral_tiles = []
@@ -61,6 +64,9 @@ class Game:
                 tile = Tile(x, y, scrap_amount, owner, units, recycler == 1, can_build == 1, can_spawn == 1,
                             in_range_of_recycler == 1)
                 self.dispatch_tile(tile)
+        if self.step == 1:
+            self.set_side()
+        self.isles = self.define_isles()
 
     def dispatch_tile(self, tile: Tile):
         if tile.owner == ME:
@@ -71,3 +77,24 @@ class Game:
             return
         self.neutral_tiles.append(tile)
         return
+
+    def set_side(self):
+        if np.mean([bot.x for bot in self.gamer.bots]) >= self.width / 2:
+            self.side = 'right'
+            return
+        self.side = 'left'
+
+    def get_tile_without_isle_affectation(self):
+        return [tile for tile in self.tiles if tile.isle_id is None and tile.scrap_amount > 0]
+
+    def define_isles(self):
+        unaffected_tiles = self.get_tile_without_isle_affectation()
+        isle_id = 0
+        isles_size = []
+        while len(unaffected_tiles) > 0 and isle_id < 100:
+            tile = unaffected_tiles[0]
+            isle_tiles = tile.neighborhood(self, unaffected_tiles, isle_id=isle_id)
+            isles_size.append(len(isle_tiles))
+            isle_id += 1
+        LOGGER.append(f'MESSAGE Isles {isle_id}, Size {isles_size}')
+        return isle_id
