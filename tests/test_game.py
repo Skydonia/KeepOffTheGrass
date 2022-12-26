@@ -1,6 +1,7 @@
 from src import Game
 import numpy as np
 import mock
+import pytest
 
 
 def get_size_mock(game):
@@ -10,7 +11,7 @@ def get_size_mock(game):
 def get_state_mock(game):
     scrap_amount = np.random.randint(1, 4)
     owner = np.random.randint(-1, 2)
-    units = (0, np.random.randint(4))[np.random.rand() > 0.9]
+    units = (0, np.random.randint(4))[np.random.rand() > 0.7]
     recycler = np.random.randint(3)
     can_build = bool(np.random.randint(2))
     can_spawn = bool(np.random.randint(2))
@@ -55,8 +56,9 @@ def test_play():
 
 @mock.patch.object(Game, 'get_size', get_size_mock)
 @mock.patch.object(Game, 'get_state', get_state_mock)
-def test_recursivesq():
+def test_recursive():
     test_game = Game()
     test_game.update()
+    test_game.setup()
     # isle_size = len(test_game[5, 5].neighborhood(test_game, test_game.tiles, isle_id='test'))
     assert True

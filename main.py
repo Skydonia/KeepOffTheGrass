@@ -6,4 +6,4 @@ if __name__ == '__main__':
     while True:
         LOGGER = []
         game.update()
-        game.gamer.play(game)
+        game.play()
