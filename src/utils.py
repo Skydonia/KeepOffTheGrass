@@ -27,6 +27,17 @@ def get_tile_distances(from_tiles: list, to_tiles: list, by='distance', **kwargs
     return distances
 
 
+def get_distance_matrix(from_tiles: list, to_tiles: list):
+    matrix = {}
+    for i, tile in enumerate(from_tiles):
+        for j, to_tile in enumerate(to_tiles):
+            if (j, to_tile) not in matrix:
+                matrix[(j, to_tile)] = {(i, tile): tile.get_distance(to_tile)}
+                continue
+            matrix[(j, to_tile)][(i, tile)] = tile.get_distance(to_tile)
+    return pd.DataFrame(matrix)
+
+
 def get_most_sided_tile_from_list(side: str, tiles: list):
     if side.lower() not in ['left', 'right']:
         raise Exception("side must be 'left' or 'right'")

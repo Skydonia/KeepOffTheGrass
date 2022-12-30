@@ -21,7 +21,7 @@ class Tile:
         self.relative_position = None
 
     def __repr__(self):
-        return f"x={self.x}, y={self.y}, owner={self.owner}, unit={self.units}, scrap={self.scrap_amount}"
+        return f"x={self.x}, y={self.y}, owner={self.owner}, units={self.units}, scrap={self.scrap_amount}"
 
     @property
     def should_build(self):
@@ -85,3 +85,11 @@ class Tile:
                 relative_position[att].append(getattr(bot,att) - getattr(self,att))
         self.relative_position = pd.DataFrame(relative_position)
         return
+
+    @property
+    def lower_bots(self):
+        return self.relative_position[self.relative_position['y'] < 0].index.tolist()
+
+    @property
+    def upper_bots(self):
+        return self.relative_position[self.relative_position['y'] > 0].index.tolist()

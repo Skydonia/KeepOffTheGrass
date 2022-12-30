@@ -60,5 +60,6 @@ def test_recursive():
     test_game = Game()
     test_game.update()
     test_game.setup()
+    aff = test_game.gamer.formations['conquer'].affectation_matrix()
     # isle_size = len(test_game[5, 5].neighborhood(test_game, test_game.tiles, isle_id='test'))
     assert True

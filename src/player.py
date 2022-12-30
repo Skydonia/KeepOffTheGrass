@@ -15,7 +15,6 @@ class Player:
         self.matter = 0
         self.spawned_recyclers = 0
         self.side = None
-        self.bot_formation = None
         self.__bots = None
         self.__recyclers = None
         self.__spawn_able_tiles = None
@@ -62,6 +61,16 @@ class Player:
         if self.__most_sided_bot is None:
             self.__most_sided_bot = get_most_sided_tile_from_list(self.side, self.bots)
         return self.__most_sided_bot
+
+    def reset(self):
+        self.tiles = []
+        self.matter = 0
+        self.spawned_recyclers = 0
+        self.__bots = None
+        self.__recyclers = None
+        self.__spawn_able_tiles = None
+        self.__build_able_tiles = None
+        self.__most_sided_bot = None
 
 
 class Opponent(Player):

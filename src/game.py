@@ -72,9 +72,9 @@ class Game:
 
     def update(self):
         self.step += 1
+        self.gamer.reset()
+        self.opponent.reset()
         self.gamer.matter, self.opponent.matter = self.get_size()
-        self.gamer.tiles = []
-        self.opponent.tiles = []
         self.neutral_tiles = []
         for y in range(self.height):
             for x in range(self.width):
@@ -85,7 +85,7 @@ class Game:
         if self.step == 1:
             self.set_sides()
         self.impact_step = self.find_min_impact_step()
-        self.isles = self.define_isles()
+        # self.isles = self.define_isles()
 
     def dispatch_tile(self, tile: Tile):
         if tile.owner == ME:
