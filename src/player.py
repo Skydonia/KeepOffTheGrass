@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import operator
-from .utils import get_tile_distances, get_most_sided_tile_from_list
+from .utils import get_tile_distances, get_most_sided_tile_from_list, get_recycling_scrap_infos
 from .actions import Move, Spawn, Build
 from .logger import LOGGER
 from .const import RECYCLER_COST, BOT_COST
@@ -103,6 +103,7 @@ class Gamer(Player):
     def bot_spawner(self, distances, bots: int = None, stack: any = 1):
         if bots is None:
             bots = self.buildable_bots
+        LOGGER.append(f'MESSAGE max spawn: {min(bots, self.buildable_bots)}')
         for b in range(min(bots, self.buildable_bots)):
             if type(stack) == list:
                 if b < len(stack):
@@ -113,6 +114,7 @@ class Gamer(Player):
 
     def defend(self, game, bots: int = None, stack: any = 1):
         distances = get_tile_distances(self.bots, game.opponent.bots)
+        distances = distances.sort_values('unit_gap')
         self.bot_spawner(distances, bots, stack)
 
     def conquer(self, game, bots: int = None, stack: any = 1):
@@ -128,13 +130,22 @@ class Gamer(Player):
         self.bot_spawner(distances, bots, stack)
 
     def spawn_policy(self, game):
-        if game.impact_step > 1:
-            self.actions.append(Spawn(self.buildable_bots, self.most_sided_bot))
-            return
-        # TODO
+        # if game.impact_step > 1:
+        #     self.actions.append(Spawn(self.buildable_bots, self.most_sided_bot))
+        #     return
+        self.defend(game)
+        # distances = get_tile_distances(self.bots, game.opponent.tiles)
+        # self.bot_spawner(distances)
         return
 
     def build_policy(self, game):
+        if game.step == 2:
+            scrap_table = get_recycling_scrap_infos([tile for tile in self.tiles if tile.units == 0], game)
+            self.actions.append(Build(scrap_table.iloc[0]['tile']))
+        distances = get_tile_distances(self.tiles, game.opponent.tiles)
+        d = distances[distances['distance'] <= 1]
+        for tile in d['tile'].tolist():
+            self.actions.append(Build(tile))
         return
 
     def move_policy(self):

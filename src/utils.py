@@ -20,7 +20,8 @@ def get_tile_distances(from_tiles: list, to_tiles: list, by='distance', **kwargs
         nearest_tile = tile.get_nearest_tile(from_tiles)
         if nearest_tile is not None:
             distance = tile.get_distance(nearest_tile)
-            distances.append({'tile': nearest_tile, 'target': tile, by: distance})
+            distances.append(
+                {'tile': nearest_tile, 'target': tile, by: distance, 'unit_gap': nearest_tile.units - tile.units})
     if len(distances) == 0:
         return
     distances = pd.DataFrame(distances).sort_values(by, **kwargs)
@@ -55,7 +56,7 @@ def get_recycling_scrap_infos(tiles, game):
     scraps = []
     for tile in tiles:
         scrap = tile.scrap_around(game)
-        scraps.append({'tile': tile, 'scrap': scrap})
+        scraps.append({'tile': tile, 'scrap': scrap, 'self': tile.scrap_amount})
     distances = pd.DataFrame(scraps).sort_values('scrap', ascending=False)
     return distances
 

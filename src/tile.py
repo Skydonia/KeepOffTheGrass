@@ -46,7 +46,7 @@ class Tile:
         return possible_tiles[index]
 
     def scrap_around(self, game):
-        possible_tiles = self.get_around_tiles(game)
+        possible_tiles = self.get_around_tiles(game) + [self]
         return sum([tile.scrap_amount for tile in possible_tiles] + [self.scrap_amount])
 
     def get_around_tiles(self, game, tiles=None):

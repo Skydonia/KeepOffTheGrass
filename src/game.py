@@ -63,6 +63,7 @@ class Game:
     def play(self):
         self.gamer.actions = []
         self.setup()
+        # self.gamer.spawn_policy(self)
         self.gamer.build_policy(self)
         self.gamer.spawn_policy(self)
         self.gamer.move_policy()
