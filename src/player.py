@@ -98,23 +98,34 @@ class Gamer(Player):
     def setup(self, game):
         for bot in self.bots:
             bot.synchronize_with_others(self.bots)
-        self.formations['conquer'] = ConquerFormation(self, game)
+        if game.step == 1:
+            self.formations['conquer'] = ConquerFormation(self, game)
+            return
+        for formation in self.formations:
+            self.formations[formation].update(self, game)
 
     def bot_spawner(self, distances, bots: int = None, stack: any = 1):
+        if len(distances) == 0:
+            return
         if bots is None:
             bots = self.buildable_bots
-        LOGGER.append(f'MESSAGE max spawn: {min(bots, self.buildable_bots)}')
-        for b in range(min(bots, self.buildable_bots)):
-            if type(stack) == list:
-                if b < len(stack):
-                    self.actions.append(Spawn(stack[b], distances.iloc[b]['tile']))
-                    continue
-            self.actions.append(Spawn(stack, distances.iloc[b]['tile']))
+        # LOGGER.append(f'MESSAGE max spawn: {min(bots, self.buildable_bots)}')
+        bot_to_spawn = min(bots, self.buildable_bots)
+        b = 0
+        while (bot_to_spawn > 0) and (b < len(distances)):
+            stack = -distances.iloc[b]['unit_gap']
+            if stack < 0:
+                stack = 0
+            if bot_to_spawn >= stack > 0:
+                self.actions.append(Spawn(stack, distances.iloc[b]['tile']))
+                bot_to_spawn -= stack
+            b += 1
         return
 
     def defend(self, game, bots: int = None, stack: any = 1):
         distances = get_tile_distances(self.bots, game.opponent.bots)
         distances = distances.sort_values('unit_gap')
+        distances = distances[distances['unit_gap'] <= self.buildable_bots]
         self.bot_spawner(distances, bots, stack)
 
     def conquer(self, game, bots: int = None, stack: any = 1):
@@ -133,6 +144,12 @@ class Gamer(Player):
         # if game.impact_step > 1:
         #     self.actions.append(Spawn(self.buildable_bots, self.most_sided_bot))
         #     return
+        distances = get_tile_distances(self.tiles, game.opponent.bots)
+        contact = distances[distances['distance'] <= 1]
+        if len(contact) == 0:
+            self.actions.append(Spawn(self.buildable_bots, self.most_sided_bot))
+            return
+        self.bot_spawner(contact)
         self.defend(game)
         # distances = get_tile_distances(self.bots, game.opponent.tiles)
         # self.bot_spawner(distances)
@@ -142,10 +159,10 @@ class Gamer(Player):
         if game.step == 2:
             scrap_table = get_recycling_scrap_infos([tile for tile in self.tiles if tile.units == 0], game)
             self.actions.append(Build(scrap_table.iloc[0]['tile']))
-        distances = get_tile_distances(self.tiles, game.opponent.tiles)
-        d = distances[distances['distance'] <= 1]
-        for tile in d['tile'].tolist():
-            self.actions.append(Build(tile))
+        # distances = get_tile_distances(self.tiles, game.opponent.tiles)
+        # d = distances[distances['distance'] <= 1]
+        # for tile in d['tile'].tolist():
+        #     self.actions.append(Build(tile))
         return
 
     def move_policy(self):

@@ -19,6 +19,7 @@ class Game:
         self.step = 0
         self.isles = 1
         self.impact_step = self.width // 2 + 1
+        self.__grid = None
         self.__neutral_scrap_tiles = None
         self.__neutral_grass_tiles = None
 
@@ -49,6 +50,22 @@ class Game:
             self.__neutral_grass_tiles = [tile for tile in self.neutral_tiles if tile.scrap_amount == 0]
         return self.__neutral_grass_tiles
 
+    @property
+    def grid(self):
+        if self.__grid is None:
+            grid_dict = {}
+            for tile in self.tiles:
+                if tile.y not in grid_dict:
+                    grid_dict[tile.y] = {tile.x: tile}
+                    continue
+                grid_dict[tile.y][tile.x] = tile
+            self.__grid = pd.DataFrame(grid_dict)
+            self.__grid.index.rename('x', inplace=True)
+            self.__grid.columns.rename('y', inplace=True)
+            self.__grid = self.__grid.sort_index()
+            self.__grid = self.__grid.sort_index(axis=1)
+        return self.__grid
+
     @staticmethod
     def get_size():
         return [int(i) for i in input().split()]
@@ -60,10 +77,15 @@ class Game:
     def setup(self):
         self.gamer.setup(self)
 
+    def reset(self):
+        self.gamer.reset()
+        self.opponent.reset()
+        self.neutral_tiles = []
+        self.__grid = None
+
     def play(self):
         self.gamer.actions = []
         self.setup()
-        # self.gamer.spawn_policy(self)
         self.gamer.build_policy(self)
         self.gamer.spawn_policy(self)
         self.gamer.move_policy()
@@ -73,10 +95,8 @@ class Game:
 
     def update(self):
         self.step += 1
-        self.gamer.reset()
-        self.opponent.reset()
+        self.reset()
         self.gamer.matter, self.opponent.matter = self.get_size()
-        self.neutral_tiles = []
         for y in range(self.height):
             for x in range(self.width):
                 scrap_amount, owner, units, recycler, can_build, can_spawn, in_range_of_recycler = self.get_state()
