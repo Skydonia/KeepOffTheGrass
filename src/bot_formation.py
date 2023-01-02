@@ -14,10 +14,23 @@ from .frontier import Frontier
 class BotFormation:
     def __init__(self, player, game):
         self.player = player
-        self.tiles = game.tiles
-        self.x_max = game.width - 1
-        self.y_max = game.height - 1
-        self.grid = game.grid
+        self.game = game
+
+    @property
+    def grid(self):
+        return self.game.grid
+
+    @property
+    def x_max(self):
+        return self.game.width - 1
+
+    @property
+    def y_max(self):
+        return self.game.height - 1
+
+    @property
+    def tiles(self):
+        return self.game.tiles
 
     @property
     def bots(self):
@@ -39,49 +52,25 @@ class BotFormation:
 
     def update(self, player, game):
         self.player = player
-        self.tiles = game.tiles
-        self.x_max = game.width - 1
-        self.y_max = game.height - 1
-        self.grid = game.grid
+        self.game = game
 
 
 class ConquerFormation(BotFormation):
     def __init__(self, player, game):
         super().__init__(player, game)
-        self.__frontier_tiles = None
+        self.frontier = Frontier(self.game)
         self.__cost_matrix = None
-        self.frontier = copy.deepcopy(self.player.most_sided_bot.x) + self.player.optimal_move
 
     def update(self, player, game):
         super().update(player, game)
-        self.__frontier_tiles = None
         self.__cost_matrix = None
-
-    def get_frontier(self):
-        new_frontier = []
-        for t in self.__frontier_tiles:
-            sided = self.grid.loc[t.x + self.player.optimal_move, t.y]
-            if sided.units > 0 and sided.owner == ME:
-                new_frontier.append(sided)
-                continue
-            new_frontier.append(t)
-        return new_frontier
-
-    @property
-    def frontier_tiles(self):
-        if self.__frontier_tiles is None:
-            self.__frontier_tiles = self.grid.loc[self.frontier].tolist()
-            self.__frontier_tiles = [tile for tile in self.__frontier_tiles if
-                                     (tile.scrap_amount > 0) and (
-                                         not tile.recycler) and (
-                                         not self.grid.loc[tile.x + self.player.optimal_move, tile.y].recycler)]
-            self.__frontier_tiles = self.get_frontier()
-        return self.__frontier_tiles
+        self.frontier.update(self.game)
+        self.frontier.push()
 
     @property
     def cost_matrix(self):
         if self.__cost_matrix is None:
-            self.__cost_matrix = get_distance_matrix(self.unit_bots, self.frontier_tiles)
+            self.__cost_matrix = get_distance_matrix(self.unit_bots, self.frontier.tiles)
             self.__cost_matrix = self.__cost_matrix ** 2
         return self.__cost_matrix
 
@@ -93,24 +82,19 @@ class ConquerFormation(BotFormation):
     def move(self):
         affectation_matrix = self.affectation_matrix()
         only_moves = affectation_matrix[affectation_matrix['bot'] != affectation_matrix['target']]
-        frontier_secured = self.frontier_secured()
-        LOGGER.append(f'MESSAGE secured ({[t.x for t in self.frontier_tiles]}): {frontier_secured}')
-        if frontier_secured:
-            self.frontier += 1
-            self.__frontier_tiles = None
-            frontier_secured = self.frontier_secured()
+        LOGGER.append(f'MESSAGE Frontier {[t.x for t in self.frontier.tiles]}')
         for i in only_moves.index:
             bot = only_moves.loc[i]['bot']
-            sided = self.grid.loc[bot.x + self.player.optimal_move, bot.y]
-            if not frontier_secured and not (sided.units > 0 and sided.owner == OPP):
+            if self.can_move(bot):
                 self.player.actions.append(Move(1, bot, only_moves.loc[i]['target']))
-        for bot in self.bots:
-            sided = self.grid.loc[bot.x + self.player.optimal_move, bot.y]
-            if not (sided.units > 0 and sided.owner == OPP):
-                self.move_forward(bot)
 
-    def frontier_secured(self):
-        for tile in self.frontier_tiles:
-            if tile.owner != ME and tile.scrap_amount > 0:
-                return False
+    def can_move(self, bot):
+        sided = self.grid.loc[bot.x + self.player.optimal_move, bot.y]
+        upper = self.grid.loc[bot.x, max(bot.y - 1, 0)]
+        lower = self.grid.loc[bot.x, min(bot.y + 1, self.y_max)]
+        if (
+                sided.units > 0 and sided.owner == OPP) or (
+                upper.units > 0 and upper.owner == OPP) or (
+                lower.units > 0 and lower.owner == OPP):
+            return False
         return True

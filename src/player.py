@@ -159,10 +159,10 @@ class Gamer(Player):
         if game.step == 2:
             scrap_table = get_recycling_scrap_infos([tile for tile in self.tiles if tile.units == 0], game)
             self.actions.append(Build(scrap_table.iloc[0]['tile']))
-        # distances = get_tile_distances(self.tiles, game.opponent.tiles)
-        # d = distances[distances['distance'] <= 1]
-        # for tile in d['tile'].tolist():
-        #     self.actions.append(Build(tile))
+        distances = get_tile_distances(self.build_able_tiles, game.opponent.bots)
+        d = distances[distances['distance'] <= 1]
+        for tile in d['tile'].tolist():
+            self.actions.append(Build(tile))
         return
 
     def move_policy(self):
