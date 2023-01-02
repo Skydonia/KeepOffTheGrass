@@ -141,9 +141,6 @@ class Gamer(Player):
         self.bot_spawner(distances, bots, stack)
 
     def spawn_policy(self, game):
-        # if game.impact_step > 1:
-        #     self.actions.append(Spawn(self.buildable_bots, self.most_sided_bot))
-        #     return
         distances = get_tile_distances(self.tiles, game.opponent.bots)
         contact = distances[distances['distance'] <= 1]
         if len(contact) == 0:
@@ -151,8 +148,6 @@ class Gamer(Player):
             return
         self.bot_spawner(contact)
         self.defend(game)
-        # distances = get_tile_distances(self.bots, game.opponent.tiles)
-        # self.bot_spawner(distances)
         return
 
     def build_policy(self, game):
@@ -165,6 +160,6 @@ class Gamer(Player):
             self.actions.append(Build(tile))
         return
 
-    def move_policy(self):
+    def move_policy(self, game):
         self.formations['conquer'].move()
         return

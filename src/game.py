@@ -17,7 +17,7 @@ class Game:
         self.opponent = Opponent()
         self.logger = []
         self.step = 0
-        self.isles = 1
+        self.isles = []
         self.impact_step = self.width // 2 + 1
         self.__grid = None
         self.__neutral_scrap_tiles = None
@@ -88,7 +88,7 @@ class Game:
         self.setup()
         self.gamer.build_policy(self)
         self.gamer.spawn_policy(self)
-        self.gamer.move_policy()
+        self.gamer.move_policy(self)
         sequence = ';'.join(LOGGER + self.gamer.str_actions) if len(self.gamer.actions) > 0 else 'WAIT'
         print(sequence)
         return sequence
@@ -106,7 +106,7 @@ class Game:
         if self.step == 1:
             self.set_sides()
         self.impact_step = self.find_min_impact_step()
-        # self.isles = self.define_isles()
+        self.isles = self.define_isles()
 
     def dispatch_tile(self, tile: Tile):
         if tile.owner == ME:

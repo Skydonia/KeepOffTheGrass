@@ -98,3 +98,20 @@ class ConquerFormation(BotFormation):
                 lower.units > 0 and lower.owner == OPP):
             return False
         return True
+
+
+class CleanFormation(BotFormation):
+    def __init__(self, player, game):
+        super().__init__(player, game)
+        self.__cost_matrix = None
+
+    def update(self, player, game):
+        super().update(player, game)
+        self.__cost_matrix = None
+
+    @property
+    def cost_matrix(self):
+        if self.__cost_matrix is None:
+            self.__cost_matrix = get_distance_matrix(self.unit_bots, self.game.tiles)
+            self.__cost_matrix = self.__cost_matrix ** 2
+        return self.__cost_matrix
