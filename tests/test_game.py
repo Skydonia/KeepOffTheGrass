@@ -1,8 +1,9 @@
-from src import Game
+# from src import Game
+from classes import Game
 import numpy as np
 import mock
 import pytest
-
+from classes.strategy import Strategy
 
 def get_size_mock(game):
     return 10, 10
@@ -59,7 +60,7 @@ def test_play():
 def test_recursive():
     test_game = Game()
     test_game.update()
-    test_game.setup()
+    test_game.gamer.play(test_game)
     ptn = test_game.gamer.formations['conquer'].get_frontier()
     # aff = test_game.gamer.formations['conquer'].affectation_matrix()
     # isle_size = len(test_game[5, 5].neighborhood(test_game, test_game.tiles, isle_id='test'))
