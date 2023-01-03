@@ -13,7 +13,10 @@ class Spawn(Action):
         self.amount = amount
 
     def __str__(self):
-        return f'{self.name} {self.amount} {self.tile.x} {self.tile.y}'
+        try:
+            return f'{self.name} {self.amount} {self.tile.x} {self.tile.y}'
+        except:
+            return ''
 
 
 class Build(Action):

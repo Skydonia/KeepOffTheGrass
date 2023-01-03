@@ -6,7 +6,8 @@ from .logger import LOGGER
 class Frontier:
     def __init__(self, game):
         self.game = game
-        self.starting_column = copy.deepcopy(self.player.most_sided_bot.x)  # + self.player.optimal_move
+        # self.starting_column = copy.deepcopy(self.player.most_sided_bot.x)# + self.player.optimal_move
+        self.starting_column = self.game.width // 2 - self.player.optimal_move * self.game.width // 5
         self.tiles = self.game.grid.loc[self.starting_column].tolist()
         self.secured = False
 

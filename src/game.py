@@ -1,3 +1,5 @@
+import copy
+
 import pandas as pd
 
 from .player import Gamer, Opponent
@@ -7,6 +9,7 @@ from .utils import get_tile_from_list
 from .logger import LOGGER
 from .isle import Isle
 import numpy as np
+from datetime import datetime
 
 
 class Game:
@@ -18,7 +21,11 @@ class Game:
         self.logger = []
         self.step = 0
         self.isles = []
+        self.isles_number = 1
+        self.previous_isles_number = 1
         self.impact_step = self.width // 2 + 1
+        self.first_impact_step = 0
+        self.step_start = datetime.now()
         self.__grid = None
         self.__neutral_scrap_tiles = None
         self.__neutral_grass_tiles = None
@@ -81,15 +88,21 @@ class Game:
         self.gamer.reset()
         self.opponent.reset()
         self.neutral_tiles = []
+        self.previous_isles_number = copy.deepcopy(self.isles_number)
         self.__grid = None
 
     def play(self):
+        self.step_start = datetime.now()
         self.gamer.actions = []
         self.setup()
         self.gamer.build_policy(self)
         self.gamer.spawn_policy(self)
         self.gamer.move_policy(self)
         sequence = ';'.join(LOGGER + self.gamer.str_actions) if len(self.gamer.actions) > 0 else 'WAIT'
+        # try:
+        #     sequence = ';'.join(LOGGER + self.gamer.str_actions) if len(self.gamer.actions) > 0 else 'WAIT'
+        # except:
+        #     sequence = 'WAIT'
         print(sequence)
         return sequence
 
@@ -106,6 +119,9 @@ class Game:
         if self.step == 1:
             self.set_sides()
         self.impact_step = self.find_min_impact_step()
+        if self.step == 1:
+            self.first_impact_step = copy.deepcopy(self.impact_step)
+        # if len(self.gamer.bots) > 0:
         self.isles = self.define_isles()
 
     def dispatch_tile(self, tile: Tile):
@@ -126,6 +142,7 @@ class Game:
         return
 
     def get_tile_without_isle_affectation(self):
+        # return [tile for tile in self.tiles if tile.isle_id is None and tile.scrap_amount > 0 and not tile.recycler]
         return [tile for tile in self.tiles if tile.isle_id is None and tile.scrap_amount > 0]
 
     def define_isles(self):
@@ -137,9 +154,10 @@ class Game:
             tile = unaffected_tiles[0]
             isle_tiles = tile.neighborhood(self, unaffected_tiles, isle_id=isle_id)
             isles_size.append(len(isle_tiles))
-            isles.append(Isle(isle_id, isle_tiles))
+            isles.append(Isle(isle_tiles))
             isle_id += 1
         LOGGER.append(f'MESSAGE Isles {isle_id}, Size {isles_size}')
+        self.isles_number = isle_id
         return isles
 
     def find_min_impact_step(self):
