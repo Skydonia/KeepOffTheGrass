@@ -24,6 +24,8 @@ class Game:
         self.step_start = datetime.now()
         self.last_step_time = 0
         self.historic = {}
+        self.impact = 0
+        self.default_message = f'MESSAGE Time = {self.last_step_time} ms'
         self.__step = 0
         self.__grid = None
         self.__neutral_scrap_tiles = None
@@ -95,7 +97,7 @@ class Game:
     def play(self):
         self.gamer.actions = []
         self.gamer.play(self)
-        sequence = ';'.join(LOGGER + self.gamer.str_actions) if len(self.gamer.actions) > 0 else 'WAIT'
+        sequence = ';'.join(LOGGER + self.gamer.str_actions) if len(self.gamer.actions) > 0 else self.default_message
         print(sequence)
         return sequence
 
@@ -110,6 +112,7 @@ class Game:
                                           in_range_of_recycler)
         if self.step == 1:
             self.set_sides()
+            self.impact = self.find_min_impact_step()
         self.isles = self.define_isles()
 
     def dispatch_tile(self, tile: Tile):
@@ -130,7 +133,8 @@ class Game:
         return
 
     def get_tile_without_isle_affectation(self):
-        return [tile for tile in self.tiles if tile.isle_id is None and tile.scrap_amount > 0]
+        # return [tile for tile in self.tiles if tile.isle_id is None and tile.scrap_amount > 0]
+        return [tile for tile in self.tiles if tile.isle_id is None and tile.scrap_amount > 0 and not tile.recycler]
 
     def define_isles(self):
         unaffected_tiles = self.get_tile_without_isle_affectation()
@@ -146,3 +150,7 @@ class Game:
         LOGGER.append(f'MESSAGE Time = {self.last_step_time} ms, Isles {isle_id}, Size {isles_size}')
         self.isles_number = isle_id
         return isles
+
+    def find_min_impact_step(self):
+        distance = self.gamer.most_sided_bot.get_distance(self.opponent.most_sided_bot)
+        return distance // 2 + 1

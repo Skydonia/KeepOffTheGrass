@@ -44,16 +44,31 @@ class BotFormation:
         return
 
     def default_build(self):
-        if self.game.step == 2:
+        # if self.game.step == 2:
+        if 2 <= self.game.step <= max(2, self.game.impact // 1.8):
             scrap_table = get_recycling_scrap_infos([tile for tile in self.isle.gamer_tiles if tile.units == 0],
                                                     self.game)
             self.player.actions.append(Build(scrap_table.iloc[0]['tile']))
         distances = get_tile_distances(self.player.build_able_tiles, self.isle.opponent_bots)
         if distances is None:
             return
+        self.avoid_inf_loop()
         d = distances[distances['distance'] <= 1]
-        for tile in d['tile'].tolist():
-            self.player.actions.append(Build(tile))
+        for i in d.index:
+            tile = d.loc[i]['tile']
+            sided = getattr(tile, ('left', 'right')[self.player.side == 'left'])(self.game)
+            if sided == d.loc[i]['target']:
+                self.player.actions.append(Build(tile))
+        # for tile in d['tile'].tolist():
+        #     self.player.actions.append(Build(tile))
+        return
+
+    def avoid_inf_loop(self):
+        if len(self.bots) > 0:
+            i = np.argmax([bot.units for bot in self.bots])
+            if self.bots[i].units > 20:
+                ptn = self.bots[i]
+                self.player.actions.append(Build(self.game.grid.loc[ptn.x - self.player.optimal_move, ptn.y]))
         return
 
     def build(self):
@@ -89,11 +104,12 @@ class BotFormation:
         self.bot_spawner(distances, bots)
 
     def spawn(self):
-        # distances = get_tile_distances(self.tiles, self.isle.opponent_bots)
-        # if distances is None:
-        #     return
-        # contact = distances[distances['distance'] <= 1]
-        # self.bot_spawner(contact)
+        distances = get_tile_distances(self.tiles, self.isle.opponent_bots)
+        if distances is None:
+            self.backup_spawn(limit=0)
+            return
+        contact = distances[distances['distance'] <= 1]
+        self.bot_spawner(contact)
         # if len(self.bots) > 0:
         #     self.defend_spawn()
         # if self.player.matter > 30:
@@ -131,6 +147,9 @@ class ConquerFormation(BotFormation):
         if self.__cost_matrix is None:
             self.__cost_matrix = get_distance_matrix(self.unit_bots, self.frontier.tiles)
             self.__cost_matrix = self.__cost_matrix ** 2
+            # if len(self.__cost_matrix) > 0:
+            #     self.__cost_matrix[self.__cost_matrix.columns[0]] -= 2
+            #     self.__cost_matrix[self.__cost_matrix.columns[-1]] -= 2
         return self.__cost_matrix
 
     def affectation_matrix(self):
@@ -139,37 +158,47 @@ class ConquerFormation(BotFormation):
                              'target': np.array([e[-1] for e in self.cost_matrix.columns.tolist()])[col_ind]})
 
     def move(self):
+        # locked_dict = {}
         affectation_matrix = self.affectation_matrix()
         only_moves = affectation_matrix[affectation_matrix['bot'] != affectation_matrix['target']]
         LOGGER.append(f'MESSAGE Frontier {[t.x for t in self.frontier.tiles]}')
         for i in only_moves.index:
             bot = only_moves.loc[i]['bot']
-            if self.can_move(bot):
+            locked = self.get_locked_units(bot)
+            if self.can_move(locked):
                 self.player.actions.append(Move(1, bot, only_moves.loc[i]['target']))
+            #     continue
+            # if bot.units > locked:
+            #     if (bot.x, bot.y) not in locked_dict:
+            #         locked_dict[(bot.x, bot.y)] = locked
+            #     if bot.units > locked_dict[(bot.x, bot.y)]:
+            #         self.player.actions.append(Move(1, bot, only_moves.loc[i]['target']))
+            #         locked_dict[(bot.x, bot.y)] += 1
         for bot in self.bots:
-            if self.can_move(bot):
+            locked = self.get_locked_units(bot)
+            if self.can_move(locked):
                 self.move_forward(bot)
 
-    def can_move(self, bot):
-        x = max(bot.x + self.player.optimal_move, 0)
-        _x = min(bot.x - self.player.optimal_move, self.x_max)
-        if self.player.side == 'left':
-            x = min(bot.x + self.player.optimal_move, self.x_max)
-            _x = max(bot.x - self.player.optimal_move, 0)
-        # backup = getattr(bot, self.player.side)
-        # sided = getattr(bot, ('left', 'right')[self.player.side == 'left'])
-        backup = self.grid.loc[_x, bot.y]
-        sided = self.grid.loc[x, bot.y]
-        upper = self.grid.loc[bot.x, max(bot.y - 1, 0)]
-        lower = self.grid.loc[bot.x, min(bot.y + 1, self.y_max)]
-        if backup.units > 0 and backup.owner == ME:
-            return True
-        if (
-                sided.units > 0 and sided.owner == OPP) or (
-                upper.units > 0 and upper.owner == OPP) or (
-                lower.units > 0 and lower.owner == OPP):
+    @staticmethod
+    def can_move(locked):
+        if locked > 0:
             return False
         return True
+
+    def get_locked_units(self, bot):
+        backup = getattr(bot, self.player.side)(self.game)
+        sided = getattr(bot, ('left', 'right')[self.player.side == 'left'])(self.game)
+        upper = getattr(bot, 'upper')(self.game)
+        lower = getattr(bot, 'lower')(self.game)
+        total_locked = 0
+        for other in [sided, upper, lower]:
+            if other is not None:
+                if other.owner == OPP:
+                    total_locked += other.units
+        if backup is not None:
+            if backup.owner == ME:
+                total_locked -= backup.units
+        return total_locked
 
 
 class CombatFormation(BotFormation):
@@ -211,7 +240,8 @@ class CombatFormation(BotFormation):
             self.move_forward(bot)
 
     def spawn(self):
-        self.player.actions.append(Spawn(self.player.buildable_bots, self.isle.gamer_bots[0]))
+        if len(self.isle.gamer_bots) > 0:
+            self.player.actions.append(Spawn(self.player.buildable_bots, self.isle.gamer_bots[0]))
         return
 
 
@@ -249,25 +279,17 @@ class CleanFormation(BotFormation):
         only_moves = affectation_matrix[affectation_matrix['bot'] != affectation_matrix['target']]
         for i in only_moves.index:
             bot = only_moves.loc[i]['bot']
-            if self.can_move(bot):
-                self.player.actions.append(Move(1, bot, only_moves.loc[i]['target']))
-        # neutrals = len(self.isle.neutral_tiles)
-        # for bot in self.bots:
-        #     if self.can_move(bot):
-        #         self.player.actions.append(Move(1, bot, self.isle.neutral_tiles[np.random.randint(neutrals)]))
+            self.player.actions.append(Move(1, bot, only_moves.loc[i]['target']))
 
     def spawn(self):
+        isles = [i.id for i in self.player.isles]
         for formation in self.player.strategy.formations:
-            if type(self.player.strategy.formations[formation]) == CombatFormation:
+            f = self.player.strategy.formations[formation]
+            if type(f) == CombatFormation:
+                isle = f.isle
+                if ME not in isle.owners or isle.id not in isles:
+                    del f
+                    continue
                 return
         self.player.actions.append(Spawn(1, self.isle.gamer_tiles[0]))
-        # if (datetime.now() - self.game.step_start).total_seconds() < 0.045:
-        #     try:
-        #         self.player.actions.append(Spawn(1, self.isle.gamer_tiles[0]))
-        #     except:
-        #         pass
-        # self.player.actions.append(Spawn(1, self.game.gamer.spawn_able_tiles[-1]))
         return
-
-    def can_move(self, bot):
-        return True

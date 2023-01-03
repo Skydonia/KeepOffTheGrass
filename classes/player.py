@@ -1,6 +1,7 @@
 from .utils import get_most_sided_tile_from_list
 from .const import RECYCLER_COST, BOT_COST, ME
 from .strategy import Strategy
+from .logger import LOGGER
 
 
 class Player:
