@@ -208,7 +208,7 @@ class Gamer(Player):
         return
 
     def move_policy(self, game):
-        if game.isles_number > game.previous_isles_number:
+        if game.isles_number > game.previous_isles_number and game.step > game.first_impact_step:
             for isle in game.isles:
                 # if ME in isle.owners and OPP in isle.owners:
                 if isle.owners in [[ME, OPP], [OPP, ME]]:
