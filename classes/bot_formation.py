@@ -89,15 +89,15 @@ class BotFormation:
         self.bot_spawner(distances, bots)
 
     def spawn(self):
-        distances = get_tile_distances(self.tiles, self.isle.opponent_bots)
-        if distances is None:
-            return
-        contact = distances[distances['distance'] <= 1]
-        self.bot_spawner(contact)
-        if len(self.bots) > 0:
-            self.defend_spawn()
-        if self.player.matter > 30:
-            self.backup_spawn(limit=0)
+        # distances = get_tile_distances(self.tiles, self.isle.opponent_bots)
+        # if distances is None:
+        #     return
+        # contact = distances[distances['distance'] <= 1]
+        # self.bot_spawner(contact)
+        # if len(self.bots) > 0:
+        #     self.defend_spawn()
+        # if self.player.matter > 30:
+        self.backup_spawn(limit=0)
 
     def move_forward(self, bot):
         x = max(bot.x + self.player.optimal_move, 0)
@@ -206,19 +206,12 @@ class CombatFormation(BotFormation):
         only_moves = affectation_matrix[affectation_matrix['bot'] != affectation_matrix['target']]
         for i in only_moves.index:
             bot = only_moves.loc[i]['bot']
-            if self.can_move(bot):
-                self.player.actions.append(Move(1, bot, only_moves.loc[i]['target']))
-
-    def can_move(self, bot):
-        return True
+            self.player.actions.append(Move(1, bot, only_moves.loc[i]['target']))
+        for bot in self.bots:
+            self.move_forward(bot)
 
     def spawn(self):
-        if (datetime.now() - self.game.step_start).total_seconds() < 0.045:
-            try:
-                self.player.actions.append(Spawn(1, self.isle.gamer_tiles[0]))
-            except:
-                pass
-        self.player.actions.append(Spawn(1, self.game.gamer.spawn_able_tiles[-1]))
+        self.player.actions.append(Spawn(self.player.buildable_bots, self.isle.gamer_bots[0]))
         return
 
 
@@ -264,12 +257,16 @@ class CleanFormation(BotFormation):
         #         self.player.actions.append(Move(1, bot, self.isle.neutral_tiles[np.random.randint(neutrals)]))
 
     def spawn(self):
-        if (datetime.now() - self.game.step_start).total_seconds() < 0.045:
-            try:
-                self.player.actions.append(Spawn(1, self.isle.gamer_tiles[0]))
-            except:
-                pass
-        self.player.actions.append(Spawn(1, self.game.gamer.spawn_able_tiles[-1]))
+        for formation in self.player.strategy.formations:
+            if type(self.player.strategy.formations[formation]) == CombatFormation:
+                return
+        self.player.actions.append(Spawn(1, self.isle.gamer_tiles[0]))
+        # if (datetime.now() - self.game.step_start).total_seconds() < 0.045:
+        #     try:
+        #         self.player.actions.append(Spawn(1, self.isle.gamer_tiles[0]))
+        #     except:
+        #         pass
+        # self.player.actions.append(Spawn(1, self.game.gamer.spawn_able_tiles[-1]))
         return
 
     def can_move(self, bot):

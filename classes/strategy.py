@@ -1,5 +1,6 @@
 from .bot_formation import ConquerFormation, CombatFormation, CleanFormation
 from .const import ME, OPP
+from .logger import LOGGER
 
 
 class Strategy:
@@ -22,6 +23,7 @@ class Strategy:
                 return None
             return CleanFormation
         if isle.owners in [[ME, OPP], [OPP, ME]] and len(isle.gamer_tiles) < len(isle.opponent_tiles) // 5:
+            LOGGER.append(f'MESSAGE Formation Kamikaze {isle.id}')
             return CombatFormation
         return ConquerFormation
 
