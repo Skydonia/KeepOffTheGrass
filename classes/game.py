@@ -168,6 +168,6 @@ class Game:
                     break
 
     def set_center_distance_grid(self):
-        distance_grid = self.grid[self.grid.index < self.gamer.center.x + self.gamer.optimal_move * self.impact]
-        distance_grid = distance_grid.applymap(lambda x: x.get_distance(self.gamer.center) ** 2)
+        # distance_grid = self.grid[self.grid.index < self.gamer.center.x + self.gamer.optimal_move * self.impact]
+        distance_grid = self.grid.applymap(lambda x: x.get_distance(self.gamer.center) ** 2)
         return distance_grid

@@ -117,9 +117,15 @@ class BotFormation:
         x = max(bot.x + self.player.optimal_move, 0)
         if self.player.side == 'left':
             x = min(bot.x + self.player.optimal_move, self.x_max)
+        # y = bot.y - 1
+        # if abs(self.isle.y_max - y) > bot.y:
+        #     y = bot.y + 1
+        # target = self.grid.loc[x, y]
+        # if target.scrap_amount == 0:
+        target = self.grid.loc[x, bot.y]
         self.player.actions.append(Move(bot.units,
                                         bot,
-                                        self.grid.loc[x, bot.y]
+                                        target
                                         ))
         return
 
@@ -144,7 +150,10 @@ class ConquerFormation(BotFormation):
     def cost_matrix(self):
         if self.__cost_matrix is None:
             self.__cost_matrix = get_distance_matrix(self.unit_bots, self.frontier.tiles)
-            self.__cost_matrix = self.__cost_matrix ** 2
+            # opponent_distance = get_distance_matrix([self.game.opponent.center], self.frontier.tiles)
+            # for i in self.__cost_matrix.index:
+            #     self.__cost_matrix.loc[i] += opponent_distance.iloc[0]
+            # self.__cost_matrix = self.__cost_matrix ** 2
             # if len(self.__cost_matrix) > 0:
             #     self.__cost_matrix[self.__cost_matrix.columns[0]] -= 2
             #     self.__cost_matrix[self.__cost_matrix.columns[-1]] -= 2
@@ -198,16 +207,16 @@ class ConquerFormation(BotFormation):
                 total_locked -= backup.units
         return total_locked
 
-    def backup_spawn(self, limit=30):
-        # n_bots = (self.player.matter - limit) // BOT_COST
-        affected_bots = self.affectation_matrix()['target']
-        possible_tiles = [t for t in self.frontier.tiles if t not in affected_bots]
-        op_distance = get_distance_matrix(self.isle.gamer_tiles, possible_tiles) ** 2
-        row_ind, col_ind = linear_sum_assignment(op_distance)
-        bots = np.array([e[-1] for e in op_distance.index.tolist()])[row_ind]
-        for bot in bots:
-            self.player.actions.append(Spawn(1, bot))
-        return
+    # def backup_spawn(self, limit=30):
+    #     n_bots = (self.player.matter - limit) // BOT_COST
+    #     op_distance = get_distance_matrix(self.isle.gamer_tiles,
+    #                                       [self.game.opponent.center for _ in range(n_bots)]) ** 2
+    #     row_ind, col_ind = linear_sum_assignment(op_distance)
+    #     # bots = np.array([e[-1] for e in op_distance.columns.tolist()])[col_ind]
+    #     bots = np.array([e[-1] for e in op_distance.index.tolist()])[row_ind]
+    #     for bot in bots:
+    #         self.player.actions.append(Spawn(1, bot))
+    #     return
 
 
 class CombatFormation(BotFormation):

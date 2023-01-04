@@ -2,6 +2,7 @@ import copy
 
 from .const import ME
 import operator
+from .logger import LOGGER
 
 
 class Frontier:
@@ -9,12 +10,16 @@ class Frontier:
         self.game = game
         self.isle = isle
         self.main = isle.main
-        if self.main:
-            self.tiles = self.get_tiles_from_radius(self.game.impact)
-        else:
-            self.tiles = self.get_center_tiles()
-            # self.starting_column = self.isle.width // 2 - self.player.optimal_move * self.isle.width // 5
-            # self.tiles = self.game.grid.loc[self.starting_column].tolist()
+
+        # self.radius = 3
+        # if self.main:
+        #     self.tiles = self.get_tiles_from_radius(self.radius)
+        # else:
+        #     self.tiles = self.get_center_tiles()
+        # self.push_radius()
+
+        self.starting_column = self.isle.width // 2 - self.player.optimal_move * self.isle.width // 5
+        self.tiles = self.game.grid.loc[self.starting_column].tolist()
         self.push()
 
     @property
@@ -26,6 +31,16 @@ class Frontier:
             self.push_frontier_element(i)
         self.tiles = [t for t in self.tiles if t in self.isle.tiles]
         return
+
+    def push_radius(self):
+        while all([t.owner == ME or t.scrap_amount == 0 for t in self.tiles]):
+            self.radius += 1
+            if self.main:
+                self.tiles = self.get_tiles_from_radius(self.radius)
+            else:
+                self.tiles = self.get_center_tiles()
+        # self.tiles = [t for t in self.tiles if t.scrap_amount > 0]
+        self.push()
 
     def push_frontier_element(self, i):
         tile = self.tiles[i]
@@ -48,6 +63,7 @@ class Frontier:
         self.isle = isle
         self.tiles = [self.game.grid.loc[tile.x, tile.y] for tile in self.tiles]
         self.push()
+        # self.push_radius()
 
     def get_tiles_from_radius(self, radius):
         tiles = []
@@ -75,5 +91,5 @@ class Frontier:
         if len(self.isle.gamer_tiles) == 0:
             return None
         center = self.isle.gamer_tiles[0]
-        tiles = [t for t in self.isle.tiles if t.get_distance(center) ** 2 == self.isle.width // 2]
+        tiles = [t for t in self.isle.tiles if t.get_distance(center) ** 2 == self.radius]
         return tiles
