@@ -3,56 +3,23 @@ import copy
 from .const import ME
 import operator
 
+
 class Frontier:
     def __init__(self, game, isle):
         self.game = game
         self.isle = isle
-        # self.distance_grid = self.get_center_distance_grid(max_radius=self.game.impact)
-
-        # self.center = self.find_center()
-        # self.opp_center = self.find_opp_center()
-        # self.distance = self.center.get_distance(self.opp_center)
-        # self.tiles = self.find_beginning_tiles()
-
-        # if self.isle.main:
-        #     self.tiles = self.get_tiles_from_radius(3)
-        # else:
-        #     self.starting_column = self.isle.width // 2 - self.player.optimal_move * self.isle.width // 5
-        #     self.tiles = self.game.grid.loc[self.starting_column].tolist()
-
-        self.tiles = self.get_tiles_from_radius(self.game.impact)
+        self.main = isle.main
+        if self.main:
+            self.tiles = self.get_tiles_from_radius(self.game.impact)
+        else:
+            self.tiles = self.get_center_tiles()
+            # self.starting_column = self.isle.width // 2 - self.player.optimal_move * self.isle.width // 5
+            # self.tiles = self.game.grid.loc[self.starting_column].tolist()
         self.push()
 
     @property
     def player(self):
         return self.game.gamer
-
-    # def find_center(self):
-    #     for tile in self.isle.gamer_tiles:
-    #         if tile not in self.isle.gamer_bots:
-    #             return tile
-    #     return self.player.most_sided_bot
-    #
-    # def find_opp_center(self):
-    #     for tile in self.isle.opponent_tiles:
-    #         if tile not in self.isle.opponent_tiles:
-    #             return tile
-    #     return self.game.opponent.most_sided_bot
-    #
-    # def find_beginning_tiles(self):
-    #     rayon = self.distance // 2
-    #     tiles = []
-    #     for y in range(self.isle.width):
-    #         delta_y = abs(y - self.center.y)
-    #         if delta_y <= rayon:
-    #             try:
-    #                 delta_x = int((rayon ** 2 - delta_y ** 2) ** 0.5)
-    #                 x = delta_x + self.center.x
-    #                 if 0 <= x <= self.isle.x_max:
-    #                     tiles.append(self.game.grid.loc[x, y])
-    #             except:
-    #                 continue
-    #     return copy.copy(tiles)
 
     def push(self):
         for i, tile in enumerate(self.tiles):
@@ -104,3 +71,9 @@ class Frontier:
                 tiles.append(best)
         return tiles
 
+    def get_center_tiles(self):
+        if len(self.isle.gamer_tiles) == 0:
+            return None
+        center = self.isle.gamer_tiles[0]
+        tiles = [t for t in self.isle.tiles if t.get_distance(center) ** 2 == self.isle.width // 2]
+        return tiles

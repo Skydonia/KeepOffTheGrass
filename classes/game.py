@@ -150,7 +150,7 @@ class Game:
             isles_size.append(len(isle_tiles))
             isles.append(Isle(isle_tiles))
             isle_id += 1
-        LOGGER.append(f'MESSAGE Time = {self.last_step_time} ms, Isles {isle_id}, Size {isles_size}')
+        LOGGER.append(f'MESSAGE Time = {self.last_step_time} ms, Isles {isle_id} Main {[isle.main for isle in isles]}, Size {isles_size}')
         self.isles_number = isle_id
         return isles
 
@@ -162,6 +162,8 @@ class Game:
         for player in self.players:
             for tile in player.tiles:
                 if tile not in player.bots:
+                    if type(player) == Gamer:
+                        tile.center = True
                     player.center = tile
                     break
 
