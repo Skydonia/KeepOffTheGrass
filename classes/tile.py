@@ -48,6 +48,10 @@ class Tile:
         possible_tiles = self.get_around_tiles(game) + [self]
         return sum([tile.scrap_amount for tile in possible_tiles] + [self.scrap_amount])
 
+    def free_scrap(self, game):
+        possible_tiles = self.get_around_tiles(game)
+        return len([t for t in possible_tiles if t.scrap_amount > self.scrap_amount]) * self.scrap_amount
+
     def neighborhood(self, game, unaffected_tiles, isle_id=0):
         children = [self]
         unaffected_tiles.remove(self)

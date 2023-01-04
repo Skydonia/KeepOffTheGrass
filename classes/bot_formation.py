@@ -45,10 +45,11 @@ class BotFormation:
 
     def default_build(self):
         # if self.game.step == 2:
-        if 2 <= self.game.step <= max(2, self.game.impact // 1.8):
+        if 2 <= self.game.step <= self.game.impact:#max(2, self.game.impact // 1.8):
             scrap_table = get_recycling_scrap_infos([tile for tile in self.isle.gamer_tiles if tile.units == 0],
                                                     self.game)
-            self.player.actions.append(Build(scrap_table.iloc[0]['tile']))
+            if len(scrap_table) > 0:
+                self.player.actions.append(Build(scrap_table.iloc[0]['tile']))
         distances = get_tile_distances(self.player.build_able_tiles, self.isle.opponent_bots)
         if distances is None:
             return
@@ -56,9 +57,9 @@ class BotFormation:
         d = distances[distances['distance'] <= 1]
         for i in d.index:
             tile = d.loc[i]['tile']
-            sided = getattr(tile, ('left', 'right')[self.player.side == 'left'])(self.game)
-            if sided == d.loc[i]['target']:
-                self.player.actions.append(Build(tile))
+            # sided = getattr(tile, ('left', 'right')[self.player.side == 'left'])(self.game)
+            # if sided == d.loc[i]['target']:
+            self.player.actions.append(Build(tile))
         return
 
     def avoid_inf_loop(self):
@@ -95,6 +96,9 @@ class BotFormation:
         self.bot_spawner(op_distance, bots=(self.player.matter - limit) // BOT_COST)
         return
 
+    def propagate_spawn(self, limit=30):
+        return self.backup_spawn(limit=limit)
+
     def defend_spawn(self, bots: int = None):
         distances = get_tile_distances(self.bots, self.isle.opponent_bots)
         distances = distances.sort_values('unit_gap')
@@ -104,7 +108,7 @@ class BotFormation:
     def spawn(self):
         distances = get_tile_distances(self.tiles, self.isle.opponent_bots)
         if distances is None:
-            self.backup_spawn(limit=0)
+            self.propagate_spawn(limit=0)
             return
         contact = distances[distances['distance'] <= 1]
         self.bot_spawner(contact)
@@ -207,7 +211,7 @@ class ConquerFormation(BotFormation):
                 total_locked -= backup.units
         return total_locked
 
-    # def backup_spawn(self, limit=30):
+    # def propagate_spawn(self, limit=30):
     #     n_bots = (self.player.matter - limit) // BOT_COST
     #     op_distance = get_distance_matrix(self.isle.gamer_tiles,
     #                                       [self.game.opponent.center for _ in range(n_bots)]) ** 2

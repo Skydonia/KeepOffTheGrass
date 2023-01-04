@@ -69,8 +69,10 @@ def get_recycling_scrap_infos(tiles, game):
     scraps = []
     for tile in tiles:
         scrap = tile.scrap_around(game)
-        scraps.append({'tile': tile, 'scrap': scrap, 'self': tile.scrap_amount})
-    distances = pd.DataFrame(scraps).sort_values('scrap', ascending=False)
+        scraps.append({'tile': tile, 'scrap': scrap, 'self': tile.scrap_amount, 'free': tile.free_scrap(game)})
+    distances = pd.DataFrame(scraps)
+    distances = distances[distances['free'] >= 12]
+    distances = distances.sort_values('scrap', ascending=False)
     return distances
 
 
