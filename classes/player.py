@@ -11,6 +11,7 @@ class Player:
         self.matter = 0
         self.spawned_recyclers = 0
         self.side = None
+        self.center = None
         self.__bots = None
         self.__recyclers = None
         self.__spawn_able_tiles = None
@@ -102,3 +103,4 @@ class Gamer(Player):
         self.strategy.game = game
         for isle in self.isles:
             self.strategy.apply_to(isle)
+        # LOGGER.append(f'MESSAGE impact: {game.impact} center: {self.center}')

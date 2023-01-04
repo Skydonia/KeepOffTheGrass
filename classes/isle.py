@@ -11,6 +11,7 @@ class Isle:
         self.opponent_tiles = []
         self.opponent_bots = []
         self.neutral_tiles = []
+        self.main = False
         for tile in self.tiles:
             self.dispatch_tile(tile)
             self.x_list.append(tile.x)
@@ -31,6 +32,8 @@ class Isle:
         return len(self.tiles)
 
     def dispatch_tile(self, tile):
+        if tile.center:
+            self.main = True
         if tile.owner == ME:
             self.gamer_tiles.append(tile)
             if tile.units > 0:

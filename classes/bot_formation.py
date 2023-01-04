@@ -59,8 +59,6 @@ class BotFormation:
             sided = getattr(tile, ('left', 'right')[self.player.side == 'left'])(self.game)
             if sided == d.loc[i]['target']:
                 self.player.actions.append(Build(tile))
-        # for tile in d['tile'].tolist():
-        #     self.player.actions.append(Build(tile))
         return
 
     def avoid_inf_loop(self):
@@ -199,6 +197,17 @@ class ConquerFormation(BotFormation):
             if backup.owner == ME:
                 total_locked -= backup.units
         return total_locked
+
+    def backup_spawn(self, limit=30):
+        # n_bots = (self.player.matter - limit) // BOT_COST
+        affected_bots = self.affectation_matrix()['target']
+        possible_tiles = [t for t in self.frontier.tiles if t not in affected_bots]
+        op_distance = get_distance_matrix(self.isle.gamer_tiles, possible_tiles) ** 2
+        row_ind, col_ind = linear_sum_assignment(op_distance)
+        bots = np.array([e[-1] for e in op_distance.index.tolist()])[row_ind]
+        for bot in bots:
+            self.player.actions.append(Spawn(1, bot))
+        return
 
 
 class CombatFormation(BotFormation):

@@ -18,12 +18,13 @@ class Tile:
         self.isle_id = None
         self.relative_position = None
         self.grid = None
+        self.center = False
 
     def __repr__(self):
         return f"x={self.x}, y={self.y}, owner={self.owner}, units={self.units}, scrap={self.scrap_amount}"
 
     def get_distance(self, other):
-        return abs(other.x - self.x) + abs(other.y - self.y)
+        return ((other.x - self.x) ** 2 + (other.y - self.y) ** 2) ** 0.5
 
     def get_distances(self, tiles):
         return [self.get_distance(tile) for tile in tiles]

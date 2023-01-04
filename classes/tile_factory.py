@@ -9,8 +9,11 @@ class TileFactory(metaclass=Singleton):
         self.tiles = {}
 
     def create_tile(self, game, x: int, y: int, scrap_amount: int, owner: int, units: int, recycler: bool,
-                    can_build: bool, can_spawn: bool, in_range_of_recycler: bool):
+                    can_build: bool, can_spawn: bool, in_range_of_recycler: bool, center: any):
         self.n_tiles += 1
         tile = Tile(x, y, scrap_amount, owner, units, recycler == 1, can_build == 1, can_spawn == 1,
                     in_range_of_recycler == 1)
+        if center is not None:
+            if tile.x == center.x and tile.y == center.y:
+                tile.center = True
         game.dispatch_tile(tile)

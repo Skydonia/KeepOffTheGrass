@@ -25,6 +25,7 @@ class Game:
         self.last_step_time = 0
         self.historic = {}
         self.impact = 0
+        self.center_distance_grid = None
         self.default_message = f'MESSAGE Time = {self.last_step_time} ms'
         self.__step = 0
         self.__grid = None
@@ -109,10 +110,12 @@ class Game:
             for x in range(self.width):
                 scrap_amount, owner, units, recycler, can_build, can_spawn, in_range_of_recycler = self.get_state()
                 TileFactory().create_tile(self, x, y, scrap_amount, owner, units, recycler, can_build, can_spawn,
-                                          in_range_of_recycler)
+                                          in_range_of_recycler, self.gamer.center)
         if self.step == 1:
             self.set_sides()
             self.impact = self.find_min_impact_step()
+            self.set_centers()
+            self.center_distance_grid = self.set_center_distance_grid()
         self.isles = self.define_isles()
 
     def dispatch_tile(self, tile: Tile):
@@ -154,3 +157,15 @@ class Game:
     def find_min_impact_step(self):
         distance = self.gamer.most_sided_bot.get_distance(self.opponent.most_sided_bot)
         return distance // 2 + 1
+
+    def set_centers(self):
+        for player in self.players:
+            for tile in player.tiles:
+                if tile not in player.bots:
+                    player.center = tile
+                    break
+
+    def set_center_distance_grid(self):
+        distance_grid = self.grid[self.grid.index < self.gamer.center.x + self.gamer.optimal_move * self.impact]
+        distance_grid = distance_grid.applymap(lambda x: x.get_distance(self.gamer.center) ** 2)
+        return distance_grid
